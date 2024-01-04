@@ -90,11 +90,12 @@ def clash2v2ray(share_link):
                 v2ray_plugin = json.dumps(v2ray_plugin)
                 url_link = f'?v2ray-plugin={base64.b64encode(v2ray_plugin.encode()).decode()}'
             if share_link.get('plugin') == 'shadow-tls':
+                ss_info["fingerprint"] = share_link.get("client-fingerprint", "")
                 ss_info["shadowtls_password"] = share_link['plugin-opts']['password']
                 ss_info["version"] = share_link['plugin-opts']['version']
                 ss_info["host"] = share_link['plugin-opts']['host']
-                shadowtls = f'{{"version": "{ss_info["version"]}", "host": "{ss_info["host"]}","password": "{ss_info["shadowtls_password"]}"}}'
-                url_link += f'?shadow-tls={base64.b64encode(shadowtls.encode()).decode()}'
+                shadowtls = f'{{"version": "{ss_info["version"]}", "host": "{ss_info["host"]}","password": "{ss_info["shadowtls_password"]}","fp": "{ss_info["fingerprint"]}"}}'
+                url_link = f'?shadow-tls={base64.b64encode(shadowtls.encode()).decode()}'
             link = "ss://{base_link}@{server}:{port}{url_link}".format(base_link=base_link, url_link=url_link, **ss_info)
         else:
             link = "ss://{base_link}@{server}:{port}".format(base_link=base_link, **ss_info)
@@ -117,7 +118,7 @@ def clash2v2ray(share_link):
             "cipher": share_link['cipher'],
             "obfs": share_link['obfs'],
             "password": base64.b64encode(share_link.get('password', '').encode('utf-8')).decode('utf-8'),
-            "obfsparam": base64.b64encode(share_link.get('obfs-param', '').encode('utf-8')).decode('utf-8'),
+            "obfsparam": base64.b64encode(share_link.get('obfs-param').encode('utf-8')).decode('utf-8') if share_link.get('obfs-param') != None else '',
             "protoparam": base64.b64encode(share_link.get('protocol-param', '').encode('utf-8')).decode('utf-8'),
             "remarks": base64.b64encode(share_link.get('name', '').encode('utf-8')).decode('utf-8'),
             "group": base64.b64encode(share_link.get('group', '').encode('utf-8')).decode('utf-8')
@@ -191,7 +192,7 @@ def clash2v2ray(share_link):
             vless_info["host"] = share_link['ws-opts'].get('headers', {}).get('Host', '')
             link = "vless://{uuid}@{server}:{port}?encryption=none&security={security}&sni={sni}&fp={fp}&type={type}&host={host}&path={path}&flow={flow}&allowInsecure={allowInsecure}".format(**vless_info)
         if vless_info['type'] == 'grpc':
-            if share_link.get('grpc-opts').get('grpc-service-name') != '/' :
+            if share_link.get('grpc-opts', {}).get('grpc-service-name', '') not in ['/', ''] :
                 vless_info["serviceName"] = unquote(share_link.get('grpc-opts').get('grpc-service-name'))
             else:
                 vless_info["serviceName"] = ''
