@@ -108,7 +108,8 @@ def edit_temp_json():
 
 @app.route('/config/<path:url>', methods=['GET'])
 def config(url):
-    
+    if 'gitlab' in url:
+        return None
     # temp_json_data_str = os.environ['TEMP_JSON_DATA']
     # temp_json_data = json.loads(temp_json_data_str)
     temp_json_data = json.loads('{"subscribes":[{"url":"URL","tag":"tag_1","enabled":true,"emoji":1,"subgroup":"","prefix":"","User-Agent":"v2rayng"},{"url":"URL","tag":"tag_2","enabled":false,"emoji":0,"subgroup":"命名/named","prefix":"❤️","User-Agent":"clashmeta"},{"url":"URL","tag":"tag_3","enabled":false,"emoji":1,"subgroup":"","prefix":"","User-Agent":"v2rayng"}],"auto_set_outbounds_dns":{"proxy":"","direct":""},"save_config_path":"./config.json","auto_backup":false,"exclude_protocol":"ssr","config_template":"","Only-nodes":false}')
@@ -177,35 +178,38 @@ def config(url):
 
     # 构建要删除的字符串列表
     params_to_remove = [
-        f'&prefix={quote(pre_param)}',
-        f'&ua={ua_param}',
-        f'&UA={UA_param}',
-        f'&file={quote(file_param).replace("/", "%2F")}',
-        f'&emoji={emoji_param}',
-        f'&tag={tag_param}',
+        f'prefix={quote(pre_param)}',
+        f'ua={ua_param}',
+        f'UA={UA_param}',
+        f'file={quote(file_param).replace("/", "%2F")}',
+        f'emoji={emoji_param}',
+        f'tag={tag_param}',
     ]
     # 从url中删除这些字符串
     for param in params_to_remove:
         if param in full_url:
             full_url = full_url.replace(param, '')
-    if full_url.endswith("%2F"):
-        full_url = full_url[:-len("%2F")]
     if request.args.get('url'):
         full_url = full_url
     else:
         full_url = unquote(full_url)
+    suffixes_to_remove = ["%2F", "/&", "&"]
+    for suffix in suffixes_to_remove:
+        if full_url.endswith(suffix):
+            full_url = full_url.rstrip(suffix)
     print (full_url)
     url_parts = full_url.split('|')
-    if len(url_parts) == 2 or len(url_parts) == 3:
+    if len(url_parts) > 1:
         subscribe['url'] = full_url.split('url=', 1)[-1].split('|')[0] if full_url.startswith('url') else full_url.split('|')[0]
         subscribe2['url'] = full_url.split('url=', 1)[-1].split('|')[1] if full_url.startswith('url') else full_url.split('|')[1]
         subscribe2['emoji'] = 1
         subscribe2['enabled'] = True
+        subscribe2['subgroup'] = ''
         subscribe2['prefix'] = ''
         subscribe2['User-Agent'] = 'v2rayng'
-    if len(url_parts) == 3:
-        subscribe3['url'] = full_url.split('url=', 1)[-1].split('|')[2] if full_url.startswith('url') else full_url.split('|')[2]
-        subscribe3['enabled'] = True
+        if len(url_parts) == 3:
+            subscribe3['url'] = full_url.split('url=', 1)[-1].split('|')[2] if full_url.startswith('url') else full_url.split('|')[2]
+            subscribe3['enabled'] = True
     if len(url_parts) == 1:
         subscribe['url'] = full_url.split('url=', 1)[-1] if full_url.startswith('url') else full_url
         subscribe['emoji'] = int(emoji_param) if emoji_param.isdigit() else subscribe.get('emoji', '')
