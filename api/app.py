@@ -108,7 +108,7 @@ def edit_temp_json():
 
 @app.route('/config/<path:url>', methods=['GET'])
 def config(url):
-    if 'gitlab' in url:
+    if any(substring in url for substring in ['gitlab.com', 'sing-box-subscribe.vercel.app', 'sub/merged_proxies.yaml', 'https:/https:/', 'xxxx', 'URL_LINK', 'URLLINK', '订阅', '你的', 'SUB', '链接']):
         return None
     # temp_json_data_str = os.environ['TEMP_JSON_DATA']
     # temp_json_data = json.loads(temp_json_data_str)
@@ -193,7 +193,7 @@ def config(url):
         full_url = full_url
     else:
         full_url = unquote(full_url)
-    suffixes_to_remove = ["%2F", "/&", "&"]
+    suffixes_to_remove = ["%2F", "/", "/&", "&"]
     for suffix in suffixes_to_remove:
         if full_url.endswith(suffix):
             full_url = full_url.rstrip(suffix)
